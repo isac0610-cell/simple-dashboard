@@ -1,0 +1,251 @@
+{
+  "overall": {
+    "total": 891,
+    "survived": 342,
+    "died": 549,
+    "survival_rate": 0.3838
+  },
+  "survival_by_sex": [
+    {
+      "Sex": "female",
+      "count": 314,
+      "mean": 0.742
+    },
+    {
+      "Sex": "male",
+      "count": 577,
+      "mean": 0.1889
+    }
+  ],
+  "survival_by_class": [
+    {
+      "Pclass": 1,
+      "count": 216,
+      "mean": 0.6296
+    },
+    {
+      "Pclass": 2,
+      "count": 184,
+      "mean": 0.4728
+    },
+    {
+      "Pclass": 3,
+      "count": 491,
+      "mean": 0.2424
+    }
+  ],
+  "survival_by_age_group": [
+    {
+      "AgeGroup": "0-9",
+      "count": 62,
+      "mean": 0.6129
+    },
+    {
+      "AgeGroup": "10-19",
+      "count": 102,
+      "mean": 0.402
+    },
+    {
+      "AgeGroup": "20-29",
+      "count": 358,
+      "mean": 0.3156
+    },
+    {
+      "AgeGroup": "30-39",
+      "count": 185,
+      "mean": 0.4541
+    },
+    {
+      "AgeGroup": "40-49",
+      "count": 110,
+      "mean": 0.3545
+    },
+    {
+      "AgeGroup": "50-59",
+      "count": 48,
+      "mean": 0.4167
+    },
+    {
+      "AgeGroup": "60+",
+      "count": 26,
+      "mean": 0.2692
+    }
+  ],
+  "fare_stats": {
+    "min": 0.0,
+    "max": 512.33,
+    "mean": 32.2,
+    "median": 14.45,
+    "std": 49.69
+  },
+  "survival_by_family_size": [
+    {
+      "FamilySize": 1,
+      "count": 537,
+      "mean": 0.3035
+    },
+    {
+      "FamilySize": 2,
+      "count": 161,
+      "mean": 0.5528
+    },
+    {
+      "FamilySize": 3,
+      "count": 102,
+      "mean": 0.5784
+    },
+    {
+      "FamilySize": 4,
+      "count": 29,
+      "mean": 0.7241
+    },
+    {
+      "FamilySize": 5,
+      "count": 15,
+      "mean": 0.2
+    },
+    {
+      "FamilySize": 6,
+      "count": 22,
+      "mean": 0.1364
+    },
+    {
+      "FamilySize": 7,
+      "count": 12,
+      "mean": 0.3333
+    },
+    {
+      "FamilySize": 8,
+      "count": 6,
+      "mean": 0.0
+    },
+    {
+      "FamilySize": 11,
+      "count": 7,
+      "mean": 0.0
+    }
+  ],
+  "survival_by_embarked": [
+    {
+      "Embarked": "C",
+      "count": 168,
+      "mean": 0.5536
+    },
+    {
+      "Embarked": "Q",
+      "count": 77,
+      "mean": 0.3896
+    },
+    {
+      "Embarked": "S",
+      "count": 646,
+      "mean": 0.339
+    }
+  ],
+  "survival_by_cabin": [
+    {
+      "HasCabin": 0,
+      "count": 687,
+      "mean": 0.2999
+    },
+    {
+      "HasCabin": 1,
+      "count": 204,
+      "mean": 0.6667
+    }
+  ],
+  "correlation": {
+    "labels": [
+      "Survived",
+      "Pclass",
+      "Age",
+      "SibSp",
+      "Parch",
+      "Fare",
+      "HasCabin",
+      "FamilySize"
+    ],
+    "values": [
+      [
+        1.0,
+        -0.3385,
+        -0.0596,
+        -0.0353,
+        0.0816,
+        0.2573,
+        0.3169,
+        0.0166
+      ],
+      [
+        -0.3385,
+        1.0,
+        -0.4136,
+        0.0831,
+        0.0184,
+        -0.5495,
+        -0.7255,
+        0.066
+      ],
+      [
+        -0.0596,
+        -0.4136,
+        1.0,
+        -0.2499,
+        -0.1755,
+        0.1227,
+        0.277,
+        -0.2585
+      ],
+      [
+        -0.0353,
+        0.0831,
+        -0.2499,
+        1.0,
+        0.4148,
+        0.1597,
+        -0.0405,
+        0.8907
+      ],
+      [
+        0.0816,
+        0.0184,
+        -0.1755,
+        0.4148,
+        1.0,
+        0.2162,
+        0.037,
+        0.7831
+      ],
+      [
+        0.2573,
+        -0.5495,
+        0.1227,
+        0.1597,
+        0.2162,
+        1.0,
+        0.4821,
+        0.2171
+      ],
+      [
+        0.3169,
+        -0.7255,
+        0.277,
+        -0.0405,
+        0.037,
+        0.4821,
+        1.0,
+        -0.0092
+      ],
+      [
+        0.0166,
+        0.066,
+        -0.2585,
+        0.8907,
+        0.7831,
+        0.2171,
+        -0.0092,
+        1.0
+      ]
+    ]
+  }
+}
