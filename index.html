@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Titanic Survival Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 24px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: #f8fafc;
+        }
+        h1 span { color: #60a5fa; }
+        h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #94a3b8;
+        }
+
+        /* Cards */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #334155;
+        }
+        .card .label { font-size: 13px; color: #64748b; margin-bottom: 6px; }
+        .card .value { font-size: 32px; font-weight: 700; }
+        .card .sub { font-size: 13px; color: #94a3b8; margin-top: 4px; }
+        .card.blue .value { color: #60a5fa; }
+        .card.green .value { color: #4ade80; }
+        .card.red .value { color: #f87171; }
+        .card.yellow .value { color: #fbbf24; }
+
+        /* Grid */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .grid-full { margin-bottom: 16px; }
+
+        .chart-box {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #334155;
+        }
+        .chart-box canvas { width: 100% !important; height: auto !important; max-height: 320px; }
+
+        /* Heatmap */
+        .heatmap-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .heatmap-table th, .heatmap-table td {
+            padding: 10px 8px;
+            text-align: center;
+            border: 1px solid #334155;
+        }
+        .heatmap-table th {
+            background: #0f172a;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        .heatmap-table td { font-weight: 600; min-width: 70px; }
+
+        /* Insight box */
+        .insight {
+            background: #1e3a5f;
+            border-left: 4px solid #60a5fa;
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #cbd5e1;
+        }
+        .insight strong { color: #f8fafc; }
+
+        @media (max-width: 900px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            body { padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Titanic <span>Survival Dashboard</span></h1>
+
+    <div class="cards" id="overviewCards"></div>
+
+    <div class="insight" id="insightBox"></div>
+
+    <div class="grid-2">
+        <div class="chart-box"><h2>Survival by Sex</h2><canvas id="chartSex"></canvas></div>
+        <div class="chart-box"><h2>Survival by Passenger Class</h2><canvas id="chartClass"></canvas></div>
+    </div>
+
+    <div class="grid-2">
+        <div class="chart-box"><h2>Survival by Age Group</h2><canvas id="chartAge"></canvas></div>
+        <div class="chart-box"><h2>Survival by Embarked Port</h2><canvas id="chartEmbarked"></canvas></div>
+    </div>
+
+    <div class="grid-2">
+        <div class="chart-box"><h2>Survival by Family Size</h2><canvas id="chartFamily"></canvas></div>
+        <div class="chart-box"><h2>Survival by Cabin Ownership</h2><canvas id="chartCabin"></canvas></div>
+    </div>
+
+    <div class="grid-full">
+        <div class="chart-box">
+            <h2>Correlation Heatmap</h2>
+            <div style="overflow-x:auto"><table class="heatmap-table" id="heatmapTable"></table></div>
+        </div>
+    </div>
+
+    <div class="grid-3">
+        <div class="chart-box"><h2>Fare Distribution</h2><canvas id="chartFare"></canvas></div>
+        <div class="chart-box"><h2>Age Distribution</h2><canvas id="chartAgeDist"></canvas></div>
+        <div class="chart-box"><h2>Passenger Class Distribution</h2><canvas id="chartPieClass"></canvas></div>
+    </div>
+</div>
+
+<script>
+const data = {
+  "overall": { "total": 891, "survived": 342, "died": 549, "survival_rate": 0.3838 },
+  "survival_by_sex": [{ "Sex": "female", "count": 314, "mean": 0.742 }, { "Sex": "male", "count": 577, "mean": 0.1889 }],
+  "survival_by_class": [{ "Pclass": 1, "count": 216, "mean": 0.6296 }, { "Pclass": 2, "count": 184, "mean": 0.4728 }, { "Pclass": 3, "count": 491, "mean": 0.2424 }],
+  "survival_by_age_group": [
+    { "AgeGroup": "0-9", "count": 62, "mean": 0.6129 }, { "AgeGroup": "10-19", "count": 102, "mean": 0.402 },
+    { "AgeGroup": "20-29", "count": 358, "mean": 0.3156 }, { "AgeGroup": "30-39", "count": 185, "mean": 0.4541 },
+    { "AgeGroup": "40-49", "count": 110, "mean": 0.3545 }, { "AgeGroup": "50-59", "count": 48, "mean": 0.4167 },
+    { "AgeGroup": "60+", "count": 26, "mean": 0.2692 }
+  ],
+  "fare_stats": { "min": 0, "max": 512.33, "mean": 32.2, "median": 14.45, "std": 49.69 },
+  "survival_by_family_size": [
+    { "FamilySize": 1, "count": 537, "mean": 0.3035 }, { "FamilySize": 2, "count": 161, "mean": 0.5528 },
+    { "FamilySize": 3, "count": 102, "mean": 0.5784 }, { "FamilySize": 4, "count": 29, "mean": 0.7241 },
+    { "FamilySize": 5, "count": 15, "mean": 0.2 }, { "FamilySize": 6, "count": 22, "mean": 0.1364 },
+    { "FamilySize": 7, "count": 12, "mean": 0.3333 }, { "FamilySize": 8, "count": 6, "mean": 0.0 },
+    { "FamilySize": 11, "count": 7, "mean": 0.0 }
+  ],
+  "survival_by_embarked": [{ "Embarked": "C", "count": 168, "mean": 0.5536 }, { "Embarked": "Q", "count": 77, "mean": 0.3896 }, { "Embarked": "S", "count": 646, "mean": 0.339 }],
+  "survival_by_cabin": [{ "HasCabin": 0, "count": 687, "mean": 0.2999 }, { "HasCabin": 1, "count": 204, "mean": 0.6667 }],
+  "correlation": {
+    "labels": ["Survived","Pclass","Age","SibSp","Parch","Fare","HasCabin","FamilySize"],
+    "values": [
+      [1,-0.3385,-0.0596,-0.0353,0.0816,0.2573,0.3169,0.0166],
+      [-0.3385,1,-0.4136,0.0831,0.0184,-0.5495,-0.7255,0.066],
+      [-0.0596,-0.4136,1,-0.2499,-0.1755,0.1227,0.277,-0.2585],
+      [-0.0353,0.0831,-0.2499,1,0.4148,0.1597,-0.0405,0.8907],
+      [0.0816,0.0184,-0.1755,0.4148,1,0.2162,0.037,0.7831],
+      [0.2573,-0.5495,0.1227,0.1597,0.2162,1,0.4821,0.2171],
+      [0.3169,-0.7255,0.277,-0.0405,0.037,0.4821,1,-0.0092],
+      [0.0166,0.066,-0.2585,0.8907,0.7831,0.2171,-0.0092,1]
+    ]
+  }
+};
+
+const COLORS = { blue: 'rgba(96,165,250,', green: 'rgba(74,222,128,', red: 'rgba(248,113,113,', yellow: 'rgba(251,191,36,' };
+const COLORS_SOLID = { blue: '#60a5fa', green: '#4ade80', red: '#f87171', yellow: '#fbbf24' };
+
+// Overview cards
+document.getElementById('overviewCards').innerHTML = `
+    <div class="card blue"><div class="label">Total Passengers</div><div class="value">${data.overall.total}</div></div>
+    <div class="card green"><div class="label">Survived</div><div class="value">${data.overall.survived}</div><div class="sub">${(data.overall.survival_rate*100).toFixed(1)}% survival rate</div></div>
+    <div class="card red"><div class="label">Died</div><div class="value">${data.overall.died}</div></div>
+    <div class="card yellow"><div class="label">Gender Ratio</div><div class="value">${data.survival_by_sex.find(d=>d.Sex==='female').count}</div><div class="sub">F · M ${data.survival_by_sex.find(d=>d.Sex==='male').count}</div></div>
+`;
+
+// Insight
+const sr = (data.overall.survival_rate*100).toFixed(1);
+const femaleSr = (data.survival_by_sex.find(d=>d.Sex==='female').mean*100).toFixed(1);
+const maleSr = (data.survival_by_sex.find(d=>d.Sex==='male').mean*100).toFixed(1);
+const class1Sr = (data.survival_by_class.find(d=>d.Pclass===1).mean*100).toFixed(1);
+const class3Sr = (data.survival_by_class.find(d=>d.Pclass===3).mean*100).toFixed(1);
+const cabinSr = (data.survival_by_cabin.find(d=>d.HasCabin===1).mean*100).toFixed(1);
+document.getElementById('insightBox').innerHTML = `
+    <strong>Key Insights</strong><br>
+    Overall survival rate is <strong>${sr}%</strong>. Women survived at <strong>${femaleSr}%</strong> vs men at <strong>${maleSr}%</strong> — a dramatic gender disparity.
+    1st class passengers had a <strong>${class1Sr}%</strong> survival rate compared to just <strong>${class3Sr}%</strong> for 3rd class.
+    Passengers with a recorded cabin (${cabinSr}% survival) fared significantly better than those without.
+    Families of size 2–4 had markedly higher survival rates than solo travelers.
+`;
+
+// Chart defaults
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = '#334155';
+
+function makeBar(ctx, labels, values, label, color, bgAlpha=0.7) {
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label,
+                data: values,
+                backgroundColor: color + bgAlpha + ')',
+                borderColor: color + '1)',
+                borderWidth: 1,
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { callback: v => (v*100).toFixed(0)+'%' } }
+            }
+        }
+    });
+}
+
+function makeDoughnut(ctx, labels, values, colorsArr) {
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels,
+            datasets: [{ data: values, backgroundColor: colorsArr, borderWidth: 0 }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'bottom', labels: { padding: 12, boxWidth: 12 } }
+            }
+        }
+    });
+}
+
+// Survival by Sex
+makeBar(document.getElementById('chartSex'),
+    data.survival_by_sex.map(d => d.Sex === 'male' ? 'Male' : 'Female'),
+    data.survival_by_sex.map(d => d.mean),
+    'Survival Rate', COLORS.blue);
+
+// Survival by Class
+makeBar(document.getElementById('chartClass'),
+    data.survival_by_class.map(d => 'Class ' + d.Pclass),
+    data.survival_by_class.map(d => d.mean),
+    'Survival Rate', COLORS.green);
+
+// Survival by Age
+makeBar(document.getElementById('chartAge'),
+    data.survival_by_age_group.map(d => d.AgeGroup),
+    data.survival_by_age_group.map(d => d.mean),
+    'Survival Rate', COLORS.yellow);
+
+// Embarked (doughnut)
+makeDoughnut(document.getElementById('chartEmbarked'),
+    data.survival_by_embarked.map(d => d.Embarked + ' (' + (d.mean*100).toFixed(0) + '%)'),
+    data.survival_by_embarked.map(d => d.count),
+    ['#60a5fa', '#4ade80', '#fbbf24']);
+
+// Family size
+const familyLabels = data.survival_by_family_size.map(d => d.FamilySize.toString());
+const familyValues = data.survival_by_family_size.map(d => d.mean);
+new Chart(document.getElementById('chartFamily'), {
+    type: 'bar',
+    data: {
+        labels: familyLabels,
+        datasets: [{
+            label: 'Survival Rate',
+            data: familyValues,
+            backgroundColor: familyValues.map(v => v >= 0.5 ? '#4ade80' : '#f87171'),
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { callback: v => (v*100).toFixed(0)+'%' } },
+            x: { title: { display: true, text: 'Family Size', color: '#94a3b8' } }
+        }
+    }
+});
+
+// Cabin
+makeBar(document.getElementById('chartCabin'),
+    ['No Cabin', 'Has Cabin'],
+    data.survival_by_cabin.map(d => d.mean),
+    'Survival Rate', COLORS.blue);
+
+// Fare distribution
+const fareStats = data.fare_stats;
+new Chart(document.getElementById('chartFare'), {
+    type: 'bar',
+    data: {
+        labels: ['Min', 'Median', 'Mean', 'Max'],
+        datasets: [{
+            label: 'Fare ($)',
+            data: [fareStats.min, fareStats.median, fareStats.mean, fareStats.max],
+            backgroundColor: ['#60a5fa', '#4ade80', '#fbbf24', '#f87171'],
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+
+// Age distribution (estimated from survival_by_age_group counts)
+const ageDistLabels = data.survival_by_age_group.map(d => d.AgeGroup);
+const ageDistCounts = data.survival_by_age_group.map(d => d.count);
+new Chart(document.getElementById('chartAgeDist'), {
+    type: 'bar',
+    data: {
+        labels: ageDistLabels,
+        datasets: [{
+            label: 'Passenger Count',
+            data: ageDistCounts,
+            backgroundColor: '#60a5fa',
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+
+// Pclass distribution (doughnut)
+makeDoughnut(document.getElementById('chartPieClass'),
+    data.survival_by_class.map(d => 'Class ' + d.Pclass + ' (' + d.count + ')'),
+    data.survival_by_class.map(d => d.count),
+    ['#60a5fa', '#4ade80', '#fbbf24']);
+
+// Correlation heatmap
+const corr = data.correlation;
+let html = '<tr><th></th>';
+corr.labels.forEach(l => { html += '<th>' + l + '</th>'; });
+html += '</tr>';
+corr.values.forEach((row, i) => {
+    html += '<tr><th>' + corr.labels[i] + '</th>';
+    row.forEach(v => {
+        const abs = Math.abs(v);
+        let color;
+        if (v > 0) color = `rgba(96,165,250,${abs})`;
+        else if (v < 0) color = `rgba(248,113,113,${abs})`;
+        else color = '#1e293b';
+        const textColor = abs > 0.5 ? '#fff' : '#e2e8f0';
+        html += `<td style="background:${color};color:${textColor}">${v.toFixed(2)}</td>`;
+    });
+    html += '</tr>';
+});
+document.getElementById('heatmapTable').innerHTML = html;
+</script>
+</body>
+</html>
